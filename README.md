@@ -1,10 +1,10 @@
 # Chelsea Tracker API
 
-📌 ### Project Overview
+### 📌 Project Overview
 
 Chelsea Tracker API is a Django REST API designed to track Chelsea FC players, managers, seasons, and competitions. The project uses PostgreSQL for data storage and Django REST Framework (DRF) for efficient API handling.
 
-🚀 ### Features
+### 🚀  Features
 
 📋 Player Data – Track players' positions, nationality, take-ons, aerial duels, and career stats.
 
