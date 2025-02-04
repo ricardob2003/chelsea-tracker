@@ -11,16 +11,30 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import environ
+import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
+# Initialize environment variables
+env = environ.Env(DEBUG=(bool, False))
+
+# Load the .env file
 BASE_DIR = Path(__file__).resolve().parent.parent
+env_file = BASE_DIR / ".env"
+
+if env_file.exists():
+    environ.Env.read_env(str(env_file))  # Load environment variables
+else:
+    print("⚠️ Warning: .env file not found!")
+
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=h!shwpqup%f899a!a$r#v0liuvv4iy5wn^sxjgl96oubdkq8w'
+
+SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,11 +51,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
+    'rest_framework',
+    'chelsea'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -75,10 +93,15 @@ WSGI_APPLICATION = 'app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME'),        # Database name
+        'USER': env('DB_USER'),        # Database user
+        'PASSWORD': env('DB_PASSWORD'), # Database password
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env('DB_PORT', default='5432'),
     }
 }
+
 
 
 # Password validation
@@ -103,7 +126,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-us'  # ✅ Default language
+
 
 TIME_ZONE = 'UTC'
 
