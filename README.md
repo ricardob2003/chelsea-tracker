@@ -19,3 +19,7 @@ Chelsea Tracker API is a Django REST API designed to track Chelsea FC players, m
 🔧 PostgreSQL Database – Optimized relational storage for scalability and reliability.
 
 📡 CORS Support – Enable frontend applications to access API securely.
+
+⚡ Redis Caching – Improve API performance with data caching.
+
+🤖 Web Scraping Pipeline – Automate data collection from football databases.
