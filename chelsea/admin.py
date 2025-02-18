@@ -29,8 +29,18 @@ class CompetitionAdmin(admin.ModelAdmin):
     search_fields = ('name', 'abbreviation')
 
 
+
 @admin.register(Vote)
 class VoteAdmin(admin.ModelAdmin):
-    list_display = ('player', 'manager', 'votes_count', 'timestamp')
-    search_fields = ('player__name', 'manager__name')
-    list_filter = ('timestamp',)
+    list_display = ("id", "player", "manager", "vote_count", "timestamp")
+
+    @admin.display(description="Votes Count")
+    def vote_count(self, obj):
+        """
+        Count the number of votes for each player/manager dynamically.
+        """
+        if obj.player:
+            return Vote.objects.filter(player=obj.player).count()
+        elif obj.manager:
+            return Vote.objects.filter(manager=obj.manager).count()
+        return 0

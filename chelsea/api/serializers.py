@@ -1,21 +1,27 @@
 from rest_framework import serializers
-from ..models import *  # Import all models from models.py
+from ..models import Player, Manager, Season, Competition
 
-### Manager Serializer ###
+# ==============================
+# 📌 MANAGER SERIALIZER
+# ==============================
 class ManagerSerializer(serializers.ModelSerializer):
-    win_rate = serializers.ReadOnlyField()  # Calculated property, read-only
+    win_rate = serializers.ReadOnlyField()
+    vote_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Manager
         fields = '__all__'
 
-    def validate_start_year(self, value):
-        if value < 1900:  # Basic validation
+    @staticmethod
+    def validate_start_year(value):
+        if value < 1900:
             raise serializers.ValidationError("Start year must be realistic.")
         return value
 
+    def get_vote_count(self, obj):
+        return obj.votes.count()
+
     def validate(self, data):
-        """Ensure end_year is after start_year if provided."""
         start_year = data.get("start_year")
         end_year = data.get("end_year")
         if end_year and end_year < start_year:
@@ -23,20 +29,33 @@ class ManagerSerializer(serializers.ModelSerializer):
         return data
 
 
-### Player Serializer ###
+# ==============================
+# 📌 PLAYER SERIALIZER
+# ==============================
 class PlayerSerializer(serializers.ModelSerializer):
+    vote_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Player
         fields = '__all__'
 
-    def validate_age(self, value):
-        """Ensure age is within a reasonable range."""
-        if not (15 <= value <= 50):  # Assuming a reasonable age range for footballers
+    def get_vote_count(self, obj):
+        return obj.votes.count()
+
+    @staticmethod
+    def validate_age(value):
+        if not (15 <= value <= 50):
             raise serializers.ValidationError("Age must be between 15 and 50.")
         return value
 
+    @staticmethod
+    def validate_position(value):
+        allowed_positions = ["GK", "DEF", "MID", "FWD"]
+        if value not in allowed_positions:
+            raise serializers.ValidationError(f"Invalid position '{value}'. Allowed: {allowed_positions}")
+        return value
+
     def validate(self, data):
-        """Ensure end_year is after start_year if provided."""
         start_year = data.get("start_year")
         end_year = data.get("end_year")
         if end_year and end_year < start_year:
@@ -44,7 +63,9 @@ class PlayerSerializer(serializers.ModelSerializer):
         return data
 
 
-### Season Serializer ###
+# ==============================
+# 📌 SEASON SERIALIZER
+# ==============================
 class SeasonSerializer(serializers.ModelSerializer):
     player = serializers.StringRelatedField()
     manager = serializers.StringRelatedField()
@@ -54,34 +75,18 @@ class SeasonSerializer(serializers.ModelSerializer):
         model = Season
         fields = '__all__'
 
-    def validate_year(self, value):
-        """Ensure the year format is correct."""
+    @staticmethod
+    def validate_year(value):
         import re
-        if not re.match(r"^\d{4}/\d{2}$", value):  # E.g., "2015/16"
+        if not re.match(r"^\d{4}/\d{2}$", value):
             raise serializers.ValidationError("Year must be in the format YYYY/YY (e.g., 2015/16).")
         return value
 
 
-### Competition Serializer ###
+# ==============================
+# 📌 COMPETITION SERIALIZER
+# ==============================
 class CompetitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Competition
         fields = '__all__'
-
-
-### Vote Serializer ###
-class VoteSerializer(serializers.ModelSerializer):
-    player = PlayerSerializer(read_only=True)  # Nested for better response
-    manager = ManagerSerializer(read_only=True)
-
-    class Meta:
-        model = Vote
-        fields = '__all__'
-
-    def validate(self, data):
-        """Ensure either player or manager is provided, but not both."""
-        if not data.get("player") and not data.get("manager"):
-            raise serializers.ValidationError("Vote must be for either a player or a manager.")
-        if data.get("player") and data.get("manager"):
-            raise serializers.ValidationError("Vote cannot be for both a player and a manager.")
-        return data

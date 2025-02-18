@@ -41,7 +41,12 @@ class Player(models.Model):
     take_ons = models.CharField(default=0 ,max_length=10)  # Store as "2/2" or "4/4"
     aerial_duels_won = models.CharField(default=0, max_length=10)
     photo_url = models.URLField(blank=True, null=True)# Year the player left Chelsea (null if still at Chelsea)
-
+    POSITION_CHOICES = [
+        ("GK", "Goalkeeper"),
+        ("DEF", "Defender"),
+        ("MID", "Midfielder"),
+        ("FWD", "Forward"),
+    ]
     def __str__(self):
         return self.name
 
@@ -55,6 +60,10 @@ class Season(models.Model):
     matches = models.IntegerField(default=0)
     minutes_played = models.IntegerField(default=0)
     year = models.CharField(max_length=9)  # E.g., "2015/16"
+
+    tackles = models.IntegerField(default=0)
+    recoveries = models.IntegerField(default=0)
+    ground_duels_won_pct = models.FloatField(default=0)
 
     def __str__(self):
         return f"{self.player.name} - {self.year} ({self.competition.name})"
@@ -80,21 +89,22 @@ class Competition(models.Model):
 class Vote(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="votes", null=True, blank=True)
     manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name="votes", null=True, blank=True)
-    votes_count = models.IntegerField(default=0)
     timestamp = models.DateTimeField(auto_now_add=True)  # Tracks when the vote was cast
 
     def __str__(self):
         if self.player:
-            return f"{self.player.name} - {self.votes_count} votes"
+            return f"Vote for {self.player.name}"
         elif self.manager:
-            return f"{self.manager.name} - {self.votes_count} votes"
-        else:
-            return f"Unspecified - {self.votes_count} votes"
+            return f"Vote for {self.manager.name}"
+        return "Unspecified vote"
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=['player', 'manager'],
-                name='unique_vote_per_player_or_manager'
+            models.CheckConstraint(
+                check=(
+                    models.Q(player__isnull=False, manager__isnull=True) |
+                    models.Q(player__isnull=True, manager__isnull=False)
+                ),
+                name="only_one_of_player_or_manager",
             )
         ]
